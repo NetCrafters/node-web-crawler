@@ -1,0 +1,20 @@
+	<p>
+		<fieldset>
+			<legend>Saved Crawlers</legend>
+			<table class="table table-bordered table-striped">
+				<thead>
+					<tr>
+						<th>Address</th>
+						<th>Sitemap</th>
+						<th>Actions</th>
+					</tr>
+				</thead>
+				<tbody id="crawlers-body">
+                    <% for (var i in crawlers) { %>
+                        <% crawler = crawlers[i]; %>
+                        <%- include ./crawlers-row.ejs %>
+                    <% } %>
+				</tbody>
+			</table>
+		</fieldset>
+	</p>

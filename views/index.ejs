@@ -1,49 +1,61 @@
 <div class="container">
 	<p>
-		<form class="form-inline" method="POST" action="/add">
+		<form class="form-horizontal" method="POST" action="/add" id="config">
 			<fieldset>
 				<legend>Crawl a website</legend>
-				<input type="text" class="input-large" name="url" placeholder="Address">
+				<input type="text" class="input-large" name="url" placeholder="Address" id="url">
 				<label class="checkbox inline">
-					<input type="checkbox" name="clean_crawl" value="1"> Clean crawl
+					<input type="checkbox" name="clean_crawl" value="1" id="clean_crawl" title="Drop all crawled urls for this url and start fresh."> Clean crawl
 				</label>
 			</fieldset>
 			
 			<br/>
 			<a href="#" id="toggle-create-crawler-options" class="collapsed">options</a>
 			<div id="create-crawler-options" style="display:none;">
-				<label class="checkbox inline">
-					<input type="checkbox" name="create_crawler_sitemap" value="1"> Generate sitemap
-				</label>
+                <fieldset>
+                    <div class="control-group">
+                        <label class="checkbox">
+                            <input type="checkbox" name="create_crawler_sitemap" value="1" id="create_crawler_sitemap"> Generate sitemap
+                        </label>
+                    </div>
 
-				<br><br>
+                    <div class="control-group">
+                        <select name="create_crawler_depth" id="create_crawler_depth">
+                            <option value="0">Crawling depth...</option>
+                            <option value="1">1</option>
+                            <option value="2">2</option>
+                            <option value="3">3</option>
+                            <option value="4">4</option>
+                            <option value="5">5</option>
+                        </select>
+                    </div>
 
-				<select name="create_crawler_depth">
-					<option value="0">Crawling depth...</option>
-					<option value="1">1</option>
-					<option value="2">2</option>
-					<option value="3">3</option>
-					<option value="4">4</option>
-					<option value="5">5</option>
-				</select>
-
-				<br><br>
-				Auth:
-				<br>
-				<input type="text" class="input-small" name="auth_user" placeholder="username">
-				<br>
-				<input type="password" class="input-small" name="auth_pass" placeholder="password">
+                    <label>Auth:</label>
+                    <label>
+                        <input type="text" class="input-small" name="auth_user" placeholder="username" id="auth_user">
+                    </label>
+                    <label>
+                        <input type="password" class="input-small" name="auth_pass" placeholder="password" id="auth_pass">
+                    </label>
+                </fieldset>
 			</div>
 			
-			<div style="padding-top: 10px;">
-				<button type="submit" class="btn">Start crawling</button>
+            <div class="control-group">
+                <div class="controls">
+                    <% if (modules.save_crawlers.enabled) { %>
+                    <label class="checkbox" for="save">
+                        <input type="checkbox" value="yes" name="save" id="save"> Save crawler
+                    </label>
+                    <% } %>
+                    <input type="submit" class="btn btn-primary crawl" value="Start Crawling" name="crawl">
+                </div>
 			</div>
 		</form>
 	</p>
 
 	<p>
 		<fieldset>
-			<legend>Active crawlers</legend>
+			<legend>Active Crawlers</legend>
 			<table class="table table-bordered table-striped">
 				<thead>
 					<tr>
@@ -58,5 +70,9 @@
 			</table>
 		</fieldset>
 	</p>
+
+    <% if (modules.save_crawlers.enabled) { %>
+        <%- include partials/crawlers.ejs %>
+    <% } %>
 
 </div> <!-- /container -->

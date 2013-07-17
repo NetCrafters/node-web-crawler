@@ -1,0 +1,29 @@
+<div class="container">
+	<h1><%= crawler.domain %></h1>
+
+	<p>
+			<table class="table table-bordered table-striped">
+				<thead>
+					<tr>
+						<th>Link</th>
+						<th>Content Type</th>
+						<th>Depth</th>
+						<th>HTTP Status</th>
+						<th title="Where the link was found.">Source</th>
+					</tr>
+				</thead>
+				<tbody id="inactive-scrapers-body">
+					<% for (var i in links) { %>
+					<tr class="<%= links[i].class %>">
+						<td><a href="<%= links[i].url %>" target="_new"><%= links[i].url_path %></a></td>
+						<td><%= links[i].content_type %></td>
+						<td><%= links[i].depth_level %></td>
+						<td><%= links[i].http_status %></td>
+						<td><a href="<%= links[i].source %>" target="_new"><%= links[i].source_path %></a></td>
+					</tr>
+					<% } %>
+				</tbody>
+			</table>
+	</p>
+
+</div><!-- /container -->

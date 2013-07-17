@@ -20,3 +20,12 @@ body {
 	border: 1px solid #DDD;
 	padding: 10px;
 }
+
+#crawlers-body form {
+    display: inline;
+}
+
+#config .control-group .controls {
+    margin-left: 0;
+}
+

@@ -1,0 +1,14 @@
+					<tr data-url="<%= crawler.url %>">
+						<td><a href="<%= crawler.url %>" target="_new"><%= crawler.url %></a></td>
+						<td><% if (crawler.sitemap) { %><a href="<%= '/sitemaps/sitemap_'+crawler.domain+'.xml' %>" target="_new">Sitemap</a><% } else { %>None<% } %></td>
+						<td>
+                            <button type="submit" class="btn btn-primary load-crawler" data-config="<%= crawler.crawlConfig %>">Load</button>
+                            <form class="form-inline view-crawler" method="get" action="/view/<%= encodeURIComponent(crawler.url) %>">
+                                <button type="submit" class="btn">View</button>
+                            </form>
+                            <form class="form-inline" method="post" action="/delete">
+                                <input type="hidden" name="url" value="<%= crawler.url %>">
+                                <button type="submit" class="btn btn-danger delete-crawler">Delete</button>
+                            </form>
+                        </td>
+					</tr>

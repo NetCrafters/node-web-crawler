@@ -9,6 +9,9 @@
   "modules": {
     "save_crawlers": {
       "enabled": false
+    },
+    "api": {
+      "enabled": false
     }
   }
 }

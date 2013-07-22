@@ -321,5 +321,219 @@ module.exports = function(app, models) {
         });
     }
 
+    /**
+     * API
+     */
+    if (app.config.modules.api.enabled) {
+        /**
+         * API Functions for "Save Crawlers" module
+         */
+        if (app.config.modules.save_crawlers.enabled) {
+            /**
+             * View a crawler
+             */
+            app.get('/api/crawler/view/:url', function(req, res) {
+                models.crawler.getCrawler(req.url, function(err, crawler) {
+                    if (err) {
+                        res.json({error: err, response: 'Could not find crawler.'});
+                    } else {
+                        res.json({error: err, response: crawler});
+                    }
+                });
+            });
+
+            /**
+             * Run a saved crawler
+             */
+            app.get('/api/crawler/crawl/:url', function(req, res) {
+                models.crawler.getCrawler(req.url, function(err, crawler) {
+                    if (err || !crawler) {
+                        res.json({error: err, response: 'Could not find crawler.'});
+                    } else {
+                        // parse params
+                        try {
+                            params = JSON.parse(crawler.crawlConfig);
+                        } catch(err) {
+                            res.json({error: true, response: 'Could not read crawl params. Error: '+err});
+                            return;
+                        }
+
+                        var url   		   = params.url,
+                            auth_user	   = params.auth_user,
+                            auth_pass	   = params.auth_pass,
+                            depth 		   = parseInt(params.create_crawler_depth),
+                            create_sitemap = params.create_crawler_sitemap == 1,
+                            clean 		   = params.clean_crawl == 1,
+                            domain         = crawler.domain;
+
+                        models.crawler.update({url:url}, {
+                            lastCrawlDate: new Date().toISOString()
+                        }, null, function(err, numberAffected, rawResponse) {
+                            if (err) {
+                                console.log('Could not update last crawl date '+domain, err);
+                            } else {
+                                console.log('Updated last crawl date '+domain);
+                            }
+                        });
+
+                        // fork our dear child
+                        var child = child_process.fork("crawling-daemon.js");
+
+                        // setup config
+                        child.send({
+                            action: "setConfig",
+                            config: app.config
+                        });
+
+                        // send auth credentials to child
+                        if (auth_user!="" && auth_pass!="") {
+                            child.send({
+                                action: "setAuth",
+                                auth_user: auth_user,
+                                auth_pass: auth_pass
+                            });
+                        }
+
+                        // get our child crawlin'
+                        child.send({
+                            action: "start",
+                            url: url,
+                            clean: clean,
+                            depth: depth
+                        });
+
+                        // wiat for "done-crawling" or "sitemap-created" for full completion
+                        child.on("message", function(data) {
+                            switch (data.message) {
+                                case "done-crawling": case "stop-crawling":
+                                    if (create_sitemap) {
+                                        child.send({ action: "createSitemap" });
+                                    } else {
+                                        child.kill(); // Terminate crawling daemon
+                                        res.json({error: false, response: 'Crawl complete.'});
+                                    }
+                                    break;
+
+                                case "sitemap-created":
+                                    var sitemap_path = "public/sitemaps/sitemap_"+ data.host +".xml";
+                                    fs.writeFile(sitemap_path, data.content, function(err) {
+                                        if (err) {
+                                            res.json({error: true, response: 'Crawl complete, but failed to write sitemap. Error: '+err});
+                                        } else {
+                                            // update crawler with sitemap
+                                            models.crawler.update({url:url}, {
+                                                sitemap: sitemap_path
+                                            }, null, function(err, numberAffected, rawResponse) {
+                                                if (err) {
+                                                    console.log('Could not update crawler with sitemap '+domain, err, numberAffected);
+                                                    res.json({error: true, response: 'Crawl complete, but could not update that the crawler has a sitemap.'});
+                                                } else {
+                                                    console.log('Updated crawler with sitemap '+domain);
+                                                    res.json({error: false, response: 'Crawl complete.'});
+                                                }
+                                            });
+                                        }
+                                        // Terminate crawling daemon
+                                        child.kill();
+                                    });
+                                    break;
+                            }
+                        });
+                    }
+                });
+            });
+        }
+
+        /**
+         * Crawl a given url
+         *
+         * request parameters:
+         *      url
+         *      auth_user
+         *      auth_pass
+         *      create_crawler_depth
+         *      create_crawler_sitemap
+         *      clean_crawl
+         */
+        app.post('/api/crawl', function(req, res) {
+            var url            = req.body.url,
+                auth_user      = req.body.auth_user,
+                auth_pass      = req.body.auth_pass,
+                depth          = parseInt(req.body.create_crawler_depth),
+                create_sitemap = req.body.create_crawler_sitemap == 1,
+                clean          = req.body.clean_crawl == 1;
+
+            if (!url) {
+                console.log('No url given: '+url);
+                res.json({error: false, response: 'No url given.'});
+                return;
+            }
+
+            // validate url
+            var matches = url.match('https?://([^/]*)/?.*');
+            if (!matches) {
+                console.log('Invalid url given: '+url);
+                res.json({error: false, response: 'Invalid url given.'});
+                return;
+            } else {
+                var domain = matches[1];
+            }
+
+            // fork our dear child
+            var child = child_process.fork("crawling-daemon.js");
+
+            // setup config
+            child.send({
+                action: "setConfig",
+                config: app.config
+            });
+
+            // send auth credentials to child
+            if (auth_user!="" && auth_pass!="") {
+                child.send({
+                    action: "setAuth",
+                    auth_user: auth_user,
+                    auth_pass: auth_pass
+                });
+            }
+
+            // get our child crawlin'
+            child.send({
+                action: "start",
+                url: url,
+                clean: clean,
+                depth: depth
+            });
+
+            // wait for "done-crawling" or "sitemap-created" for full completion
+            child.on("message", function(data) {
+                switch (data.message) {
+                    case "done-crawling": case "stop-crawling":
+                        if (create_sitemap) {
+                            child.send({ action: "createSitemap" });
+                        } else {
+                            child.kill(); // Terminate crawling daemon
+                            res.json({error: false, response: 'Crawl complete.'});
+                        }
+                        break;
+
+                    case "sitemap-created":
+                        var sitemap_path = "public/sitemaps/sitemap_"+ data.host +".xml";
+                        fs.writeFile(sitemap_path, data.content, function(err) {
+                            if (err) {
+                                res.json({error: true, response: 'Crawl complete, but failed to write sitemap. Error: '+err});
+                            } else {
+                                console.log('Updated crawler with sitemap '+domain);
+                                res.json({error: false, response: 'Crawl complete.'});
+                            }
+                            // Terminate crawling daemon
+                            child.kill();
+                        });
+                        break;
+                }
+            });
+        });
+    }
+
 }
 

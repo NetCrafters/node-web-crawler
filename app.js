@@ -11,6 +11,23 @@ var express    = require('express')
 // read config
 app.config = require('./config');
 
+// environment overrides
+if (process.env.PORT) {
+    app.config.port = process.env.PORT;
+}
+if (process.env.LOG_LEVEL) {
+    app.config.log_level = process.env.LOG_LEVEL;
+}
+if (process.env.DB_SERVICE) {
+    app.config.db.service = process.env.DB_SERVICE;
+}
+if (process.env.DB_HOST) {
+    app.config.db.host = process.env.DB_HOST;
+}
+if (process.env.DB_DATABASE) {
+    app.config.db.database = process.env.DB_DATABASE;
+}
+
 // setup socket io
 global.io = require('socket.io').listen(app.listen( app.config.port ));
 io.configure(function () {

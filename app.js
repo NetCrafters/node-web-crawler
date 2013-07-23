@@ -12,11 +12,17 @@ var express    = require('express')
 app.config = require('./config');
 
 // environment overrides
-if (process.env.PORT) {
-    app.config.port = process.env.PORT;
-}
 if (process.env.LOG_LEVEL) {
     app.config.log_level = process.env.LOG_LEVEL;
+}
+if (process.env.SERVER_SCHEME) {
+    app.config.server.scheme = process.env.SERVER_SCHEME;
+}
+if (process.env.SERVER_HOST) {
+    app.config.server.host = process.env.SERVER_HOST;
+}
+if (process.env.SERVER_PORT) {
+    app.config.server.port = process.env.SERVER_PORT;
 }
 if (process.env.DB_SERVICE) {
     app.config.db.service = process.env.DB_SERVICE;
@@ -29,7 +35,7 @@ if (process.env.DB_DATABASE) {
 }
 
 // setup socket io
-global.io = require('socket.io').listen(app.listen( app.config.port ));
+global.io = require('socket.io').listen(app.listen( app.config.server.port ));
 io.configure(function () {
 	io.set('transports', ['websocket', 'xhr-polling']);
 	io.set('log level', app.config.log_level);

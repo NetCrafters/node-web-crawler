@@ -26,14 +26,14 @@ module.exports = function(app, models) {
         if (app.config.modules.save_crawlers.enabled) {
             models.crawler.getCrawlers(function(err, crawlers) {
                 res.render('index', {
-                    port: app.config.port,
+                    port: app.config.server.port,
                     modules: app.config.modules,
                     crawlers: crawlers
                 });
             });
         } else {
             res.render('index', {
-                port: app.config.port,
+                port: app.config.server.port,
                 modules: app.config.modules
             });
         }
@@ -261,7 +261,7 @@ module.exports = function(app, models) {
          */
         app.get("/view/:url", function(req, res) {
             var modules = app.config.modules;
-            var port = app.config.port;
+            var port = app.config.server.port;
 
             models.crawler.getCrawler(req.url, function(err, crawler){
                 console.log(crawler);
@@ -410,12 +410,19 @@ module.exports = function(app, models) {
                                         child.send({ action: "createSitemap" });
                                     } else {
                                         child.kill(); // Terminate crawling daemon
-                                        res.json({error: false, response: 'Crawl complete.'});
+                                        res.json({
+                                            error: false,
+                                            response: {
+                                                message: 'Crawl complete.',
+                                                sitemap_url: null
+                                            }
+                                        });
                                     }
                                     break;
 
                                 case "sitemap-created":
                                     var sitemap_path = "public/sitemaps/sitemap_"+ data.host +".xml";
+                                    var sitemap_url = app.config.server.scheme+'://'+app.config.server.host+':'+app.config.server.port+'/sitemaps/sitemap_'+ data.host +'.xml';
                                     fs.writeFile(sitemap_path, data.content, function(err) {
                                         if (err) {
                                             res.json({error: true, response: 'Crawl complete, but failed to write sitemap. Error: '+err});
@@ -426,10 +433,22 @@ module.exports = function(app, models) {
                                             }, null, function(err, numberAffected, rawResponse) {
                                                 if (err) {
                                                     console.log('Could not update crawler with sitemap '+domain, err, numberAffected);
-                                                    res.json({error: true, response: 'Crawl complete, but could not update that the crawler has a sitemap.'});
+                                                    res.json({
+                                                        error: true,
+                                                        response: {
+                                                            message: 'Crawl complete, but could not update that the crawler has a sitemap.',
+                                                            sitemap_url: null
+                                                        }
+                                                    });
                                                 } else {
                                                     console.log('Updated crawler with sitemap '+domain);
-                                                    res.json({error: false, response: 'Crawl complete.'});
+                                                    res.json({
+                                                        error: false,
+                                                        response: {
+                                                            message: 'Crawl complete.',
+                                                            sitemap_url: sitemap_url
+                                                        }
+                                                    });
                                                 }
                                             });
                                         }
@@ -513,18 +532,37 @@ module.exports = function(app, models) {
                             child.send({ action: "createSitemap" });
                         } else {
                             child.kill(); // Terminate crawling daemon
-                            res.json({error: false, response: 'Crawl complete.'});
+                            res.json({
+                                error: false,
+                                response: {
+                                    message: 'Crawl complete.',
+                                    sitemap_url: null
+                                }
+                            });
                         }
                         break;
 
                     case "sitemap-created":
                         var sitemap_path = "public/sitemaps/sitemap_"+ data.host +".xml";
+                        var sitemap_url = app.config.server.scheme+'://'+app.config.server.host+':'+app.config.server.port+'/sitemaps/sitemap_'+ data.host +'.xml';
                         fs.writeFile(sitemap_path, data.content, function(err) {
                             if (err) {
-                                res.json({error: true, response: 'Crawl complete, but failed to write sitemap. Error: '+err});
+                                res.json({
+                                    error: true,
+                                    response: {
+                                        message: 'Crawl complete, but failed to write sitemap. Error: '+err,
+                                        sitemap_url: null
+                                    }
+                                });
                             } else {
                                 console.log('Updated crawler with sitemap '+domain);
-                                res.json({error: false, response: 'Crawl complete.'});
+                                res.json({
+                                    error: false,
+                                    response: {
+                                        message: 'Crawl complete.',
+                                        sitemap_url: sitemap_url
+                                    }
+                                });
                             }
                             // Terminate crawling daemon
                             child.kill();

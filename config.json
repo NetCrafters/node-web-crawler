@@ -1,6 +1,10 @@
 {
   "log_level": 0,
-  "port": 3000,
+  "server": {
+    "scheme": "http",
+    "host": "localhost",
+    "port": 3000
+  },
   "db": {
     "service": "mongodb",
     "host": "localhost",
@@ -8,10 +12,10 @@
   },
   "modules": {
     "save_crawlers": {
-      "enabled": false
+      "enabled": true
     },
     "api": {
-      "enabled": false
+      "enabled": true
     }
   }
 }

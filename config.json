@@ -19,7 +19,10 @@
           "deny"
         ],
         "deny": [],
-        "allow": []
+        "allow": [],
+        "username": "",
+        "password": "",
+        "realm": "Authorization Required"
       },
       "save_crawlers": {
         "enabled": false

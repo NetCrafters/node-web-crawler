@@ -12,6 +12,15 @@
       "database": "search_for_404_v4"
     },
     "modules": {
+      "basic_auth": {
+        "enabled": false,
+        "order": [
+          "allow",
+          "deny"
+        ],
+        "deny": [],
+        "allow": []
+      },
       "save_crawlers": {
         "enabled": false
       },
